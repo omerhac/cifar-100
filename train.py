@@ -1,7 +1,7 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
-import model
+import models
 import etl
 import os
 
@@ -26,7 +26,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     prep_train = prep_train.repeat()
     prep_train = prep_train.batch(batch_size)
 
-    test_generator = etl.load_test_dataset().batch(batch_size)
+    test_generator = etl.get_test_dataset().batch(batch_size)
 
     # train and log
     hist = model.fit(prep_train, epochs=epochs, validation_data=test_generator, steps_per_epoch=50000//batch_size)
@@ -40,12 +40,12 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
         plot_log(hist, epochs, ['loss', 'val_loss'], save_path=log_dir+'/loss_log_'+log_name)
 
         # accuracy log
-        plot_log(hist, epochs, ['sparse_categorical_accuracy', 'sparse_categorical_accuracy'],
+        plot_log(hist, epochs, ['sparse_categorical_accuracy', 'val_sparse_categorical_accuracy'],
                  save_path=log_dir+'/acc_log_'+log_name)
 
         # top k accuracy log
         plot_log(hist, epochs, ['sparse_top_k_categorical_accuracy', 'val_sparse_top_k_categorical_accuracy'],
-                 save_path=log_dir+'/acc_log_'+log_name)
+                 save_path=log_dir+'/topk_acc_log_'+log_name)
 
     # save weights
     if save_path:
@@ -80,5 +80,6 @@ if __name__ == '__main__':
                                 tf.keras.layers.Dense(100, activation='softmax')])
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[tf.keras.metrics.SparseCategoricalAccuracy(),
                                                                                      tf.keras.metrics.SparseTopKCategoricalAccuracy(5)])
-    ds = etl.load_train_dataset()
-    train(model, ds, epochs=2, log_name='bla.jpeg', save_path='weights/bla.h5')
+    ds = etl.get_train_dataset()
+    model = models.get_simple_model()
+    train(model, ds, epochs=50, log_name='benchmark.jpeg', save_path='weights/benchmark.h5')

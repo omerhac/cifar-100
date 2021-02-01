@@ -40,6 +40,10 @@ def get_simple_model():
     return model
 
 
+class FireModule(tf.keras.layers.Layer):
+    """Squeezenet like fire module as in https://arxiv.org/pdf/1602.07360.pdf"""
+
+
 if __name__ == '__main__':
     model = get_simple_model()
 
