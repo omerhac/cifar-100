@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import etl
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, MaxPooling2D, Input, Flatten, concatenate,\
-    GlobalAveragePooling2D
+    GlobalAveragePooling2D, Dropout
 from tensorflow.keras.metrics import SparseCategoricalAccuracy, SparseTopKCategoricalAccuracy
 
 
@@ -62,7 +62,7 @@ class FireModule(tf.keras.layers.Layer):
 
 
 class Squeezenet(tf.keras.Model):
-    """Squeezenet like model as is https://arxiv.org/pdf/1602.07360.pdf"""
+    """Squeezenet like model as in https://arxiv.org/pdf/1602.07360.pdf, with residual connections"""
     def __init__(self):
         super(Squeezenet, self).__init__()
 
@@ -108,8 +108,8 @@ class Squeezenet(tf.keras.Model):
 
 class InceptionModule(tf.keras.layers.Layer):
     """Inception style module as in https://arxiv.org/pdf/1409.4842v1.pdf"""
-    def __init__(self, filters1, filters3_red, filters3, filters5_red, filters5, filters_proj):
-        super(InceptionModule, self).__init__()
+    def __init__(self, filters1, filters3_red, filters3, filters5_red, filters5, filters_proj, name='inception'):
+        super(InceptionModule, self).__init__(name=name)
         self._num_filters1 = filters1
         self._num_filters3_red = filters3_red
         self._num_filters5_red = filters5_red
@@ -142,6 +142,48 @@ class InceptionModule(tf.keras.layers.Layer):
         return concatenate([conv1, conv3, conv5, maxpool_proj])
 
 
+class Inception(tf.keras.Model):
+    """Inception style net as in https://arxiv.org/pdf/1409.4842v1.pdf"""
+    def __init__(self):
+        super(Inception, self).__init__()
+
+        # root
+        self._root_conv = Conv2D(64, (5, 5), input_shape=[32, 32, 3], padding='valid', activation='relu',
+                                 name='root_conv')
+
+        # inception modules
+        # block 1
+        self._inception1 = InceptionModule(64, 96, 128, 16, 32, 32, name='inception1')
+        self._inception2 = InceptionModule(128, 128, 192, 32, 96, 34, name='inception2')
+        self._mp1 = MaxPooling2D((3,3), strides=(2,2), name='maxpool1')
+
+        # block 2
+        self._inception3 = InceptionModule(192, 96, 208, 16, 48, 64, name='inception3')
+        self._inception4 = InceptionModule(160, 112, 224, 24, 64, 64, name='inception4')
+        self._mp2 = MaxPooling2D((3, 3), strides=(2, 2), name='maxpool2')
+
+        # top
+        self._avg_pool = GlobalAveragePooling2D(name='top_avg_pool')
+        self._dropout = Dropout(0.4)
+        self._output = Dense(100, activation='softmax', name='output_layer')
+
+    def call(self, x):
+        "Forward pass on input x"
+        root_x = self._root_conv(x)
+
+        inception1 = self._inception1(root_x)
+        inception2 = self._inception2(inception1)
+        mp1 = self._mp1(inception2)
+
+        inception3 = self._inception3(mp1)
+        inception4 = self._inception4(inception3)
+        mp2 = self._mp2(inception4)
+
+        output = self._output(self._dropout(self._avg_pool(mp2)))
+
+        return output
+
+
 
 if __name__ == '__main__':
     model = Squeezenet()
@@ -149,6 +191,5 @@ if __name__ == '__main__':
     print(model(x).shape)
     model.build((None, 32, 32, 3))
     #print(model.summary())
-    l = InceptionModule(64, 96, 128, 16, 32, 32)
-    x = tf.random.uniform([1, 28, 28, 192])
+    l = Inception()
     print(l(x).shape)

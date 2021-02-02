@@ -76,14 +76,8 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
 
 if __name__ == '__main__':
-    model2 = tf.keras.Sequential([tf.keras.layers.Input([32, 32, 3]),
-                                 tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
-                                 tf.keras.layers.Flatten(),
-                                tf.keras.layers.Dense(100, activation='softmax')])
-    model2.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[tf.keras.metrics.SparseCategoricalAccuracy(),
-                                                                                     tf.keras.metrics.SparseTopKCategoricalAccuracy(5)])
     ds = etl.get_train_dataset()
-    model = models.Squeezenet()
+    model = models.Inception()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
                   metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=70, log_name='Squeezenet1000.jpeg', save_path='weights/Squeezenet1000.tf')
+    train(model, ds, epochs=70, log_name='Inception_no_dense.jpeg', save_path='weights/Inception_no_dense.tf')
