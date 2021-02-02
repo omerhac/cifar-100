@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 
 def load_train_dataset():
     "Return CIFAR-100 train dataset"
-    return tfds.load('cifar100', split='train', as_supervised=True, download=False)
+    return tfds.load('cifar100', split='train', as_supervised=True, download=False, data_dir='data')
 
 
 def load_test_dataset():
     "Return CIFAR-100 test dataset"
-    return tfds.load('cifar100', split='train', download=False, as_supervised=True)
+    return tfds.load('cifar100', split='train', download=False, as_supervised=True, data_dir='data')
 
 
 def get_lables():

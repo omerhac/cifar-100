@@ -4,6 +4,7 @@ import numpy as np
 import models
 import etl
 import os
+from tensorflow.keras.metrics import SparseCategoricalAccuracy, SparseTopKCategoricalAccuracy
 
 
 def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save_dir='weights', save_path=None, seed=42,
@@ -69,17 +70,19 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
     plt.xlabel('epochs')
     plt.ylabel(val_names[0])
-
+    plt.grid(True)
     plt.savefig(save_path)
 
 
 if __name__ == '__main__':
-    model = tf.keras.Sequential([tf.keras.layers.Input([32, 32, 3]),
+    model2 = tf.keras.Sequential([tf.keras.layers.Input([32, 32, 3]),
                                  tf.keras.layers.Conv2D(16, (3,3), activation='relu'),
                                  tf.keras.layers.Flatten(),
                                 tf.keras.layers.Dense(100, activation='softmax')])
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[tf.keras.metrics.SparseCategoricalAccuracy(),
+    model2.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=[tf.keras.metrics.SparseCategoricalAccuracy(),
                                                                                      tf.keras.metrics.SparseTopKCategoricalAccuracy(5)])
     ds = etl.get_train_dataset()
-    model = models.get_simple_model()
-    train(model, ds, epochs=50, log_name='benchmark.jpeg', save_path='weights/benchmark.h5')
+    model = models.Squeezenet()
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
+                  metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
+    train(model, ds, epochs=50, log_name='Squeezenet.jpeg', save_path='weights/Squeezenet.h5')
