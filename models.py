@@ -72,19 +72,19 @@ class Squeezenet(tf.keras.Model):
 
         # fire modules
         # block 1
-        self._fire1 = FireModule(16, 64, name='fire1')
-        self._fire2 = FireModule(16, 64, name='fire2')
-        self._fire3 = FireModule(32, 96, name='fire3')
-        self._mp1 = MaxPooling2D((2,2), name='maxpool1')
+        self._fire1 = FireModule(16, 32, name='fire1')
+        self._fire2 = FireModule(16, 32, name='fire2')
+        self._fire3 = FireModule(32, 128, name='fire3')
+        self._mp1 = MaxPooling2D((3,3), strides=(2,2), name='maxpool1')
 
         # block 2
-        self._fire4 = FireModule(32, 96, name='fire4')
-        self._fire5 = FireModule(32, 96, name='fire5')
-        self._fire6 = FireModule(48, 128, name='fire6')
-        self._mp2 = MaxPooling2D((2, 2), name='maxpool2')
+        self._fire4 = FireModule(32, 128, name='fire4')
+        self._fire5 = FireModule(32, 128, name='fire5')
+        self._fire6 = FireModule(64, 256, name='fire6')
+        self._mp2 = MaxPooling2D((3, 3), strides=(2,2), name='maxpool2')
 
         # top
-        self._top_conv = Conv2D(1000, (1,1), activation='relu', name='top_conv')
+        self._top_conv = Conv2D(500, (1,1), padding='same', activation='relu', name='top_conv')
         self._avg_pool = GlobalAveragePooling2D(name='top_avg_pool')
         self._output = Dense(100, activation='softmax', name='output_layer')
 
@@ -95,14 +95,24 @@ class Squeezenet(tf.keras.Model):
         fire1 = self._fire1(root_x)
         fire2 = fire1 + self._fire2(fire1) # residual connection
         fire3 = self._fire3(fire2)
+        mp1 = self._mp1(fire3)
 
-        fire4 = self._fire4(fire3)
+        fire4 = self._fire4(mp1)
         fire5 = fire4 + self._fire5(fire4)  # residual connection
         fire6 = self._fire6(fire5)
+        mp2 = self._mp2(fire6)
 
-        output = self._output(self._avg_pool(self._top_conv(fire6)))
+        output = self._output(self._avg_pool(self._top_conv(mp2)))
 
         return output
+
+
+class InceptionModule(tf.keras.layers.Layer):
+    """Inception style module as in https://arxiv.org/pdf/1409.4842v1.pdf"""
+    def __init__(self, filters1, filters3, filters5):
+        super(InceptionModule, self).__init__()
+
+
 
 
 if __name__ == '__main__':
