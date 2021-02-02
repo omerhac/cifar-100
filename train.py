@@ -51,7 +51,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     # save weights
     if save_path:
         if not os.path.exists(save_dir): os.mkdir(save_dir)
-        model.save(save_path, save_format='.h5')
+        model.save(save_path, save_format='tf')
 
 
 def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
@@ -70,6 +70,7 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
     plt.xlabel('epochs')
     plt.ylabel(val_names[0])
+    plt.legend()
     plt.grid(True)
     plt.savefig(save_path)
 
@@ -85,4 +86,4 @@ if __name__ == '__main__':
     model = models.Squeezenet()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
                   metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=50, log_name='Squeezenet.jpeg', save_path='weights/Squeezenet.h5')
+    train(model, ds, epochs=70, log_name='Squeezenet1000.jpeg', save_path='weights/Squeezenet1000.tf')

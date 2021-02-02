@@ -83,7 +83,7 @@ class Squeezenet(tf.keras.Model):
         self._mp2 = MaxPooling2D((3, 3), strides=(2,2), name='maxpool2')
 
         # top
-        self._top_conv = Conv2D(500, (1,1), padding='same', activation='relu', name='top_conv')
+        self._top_conv = Conv2D(1000, (1, 1), padding='same', activation='relu', name='top_conv')
         self._avg_pool = GlobalAveragePooling2D(name='top_avg_pool')
         self._output = Dense(100, activation='softmax', name='output_layer')
 
@@ -108,18 +108,21 @@ class Squeezenet(tf.keras.Model):
 
 class InceptionModule(tf.keras.layers.Layer):
     """Inception style module as in https://arxiv.org/pdf/1409.4842v1.pdf"""
-    def __init__(self, filters1, filters3_red, filters3, filters5_red, filters5):
+    def __init__(self, filters1, filters3_red, filters3, filters5_red, filters5, filters_proj):
         super(InceptionModule, self).__init__()
         self._num_filters1 = filters1
         self._num_filters3_red = filters3_red
         self._num_filters5_red = filters5_red
         self.num_filters5 = filters5
+        self._num_filters_proj = filters_proj
 
         self._conv1 = Conv2D(filters1, (1, 1), activation='relu', padding='same', name='1x1_conv')
         self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same',name='3x3_reduce_conv')
         self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same',name='5x5_reduce_conv')
         self._conv3 = Conv2D(filters3, (3, 3), activation='relu', padding='same', name='3x3_conv')
         self._conv5 = Conv2D(filters5, (1, 1), activation='relu', padding='same', name='5x5_conv')
+        self._maxpool = MaxPooling2D((3, 3), strides=(1, 1), padding='same', name='3x3_maxpool')
+        self._project = Conv2D(filters_proj, (1, 1), activation='relu', padding='same', name='projection')
 
     def call(self, x):
         """Forward pass on input x"""
@@ -131,7 +134,12 @@ class InceptionModule(tf.keras.layers.Layer):
         # perform branches "expensive" convolutions on reduced maps
         conv3 = self._conv3(conv3_red)
         conv5 = self._conv5(conv5_red)
-        MaxPooling2D()
+
+        # maxpooling branch
+        maxpool = self._maxpool(x)
+        maxpool_proj = self._project(maxpool)
+
+        return concatenate([conv1, conv3, conv5, maxpool_proj])
 
 
 
@@ -141,3 +149,6 @@ if __name__ == '__main__':
     print(model(x).shape)
     model.build((None, 32, 32, 3))
     #print(model.summary())
+    l = InceptionModule(64, 96, 128, 16, 32, 32)
+    x = tf.random.uniform([1, 28, 28, 192])
+    print(l(x).shape)
