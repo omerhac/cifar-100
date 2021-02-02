@@ -68,7 +68,6 @@ class Squeezenet(tf.keras.Model):
 
         # root
         self._root_conv = Conv2D(96, (5,5), input_shape=[32, 32, 3], padding='valid', activation='relu', name='root_conv')
-        #self._root_mp = MaxPooling2D((2,2), name='root_maxpool')
 
         # fire modules
         # block 1
@@ -109,9 +108,30 @@ class Squeezenet(tf.keras.Model):
 
 class InceptionModule(tf.keras.layers.Layer):
     """Inception style module as in https://arxiv.org/pdf/1409.4842v1.pdf"""
-    def __init__(self, filters1, filters3, filters5):
+    def __init__(self, filters1, filters3_red, filters3, filters5_red, filters5):
         super(InceptionModule, self).__init__()
+        self._num_filters1 = filters1
+        self._num_filters3_red = filters3_red
+        self._num_filters5_red = filters5_red
+        self.num_filters5 = filters5
 
+        self._conv1 = Conv2D(filters1, (1, 1), activation='relu', padding='same', name='1x1_conv')
+        self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same',name='3x3_reduce_conv')
+        self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same',name='5x5_reduce_conv')
+        self._conv3 = Conv2D(filters3, (3, 3), activation='relu', padding='same', name='3x3_conv')
+        self._conv5 = Conv2D(filters5, (1, 1), activation='relu', padding='same', name='5x5_conv')
+
+    def call(self, x):
+        """Forward pass on input x"""
+        # perform 1x1 convolutions per all branches for dimensionality reduction
+        conv1 = self._conv1(x)
+        conv3_red = self._conv3_red(x)
+        conv5_red = self._conv5_red(x)
+
+        # perform branches "expensive" convolutions on reduced maps
+        conv3 = self._conv3(conv3_red)
+        conv5 = self._conv5(conv5_red)
+        MaxPooling2D()
 
 
 
