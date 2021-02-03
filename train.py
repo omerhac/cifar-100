@@ -80,4 +80,8 @@ if __name__ == '__main__':
     model = models.Inception()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
                   metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=70, log_name='Inception_no_dense.jpeg', save_path='weights/Inception_no_dense.tf')
+    train(model, ds, epochs=70, log_name='Inception_with_dense.jpeg', save_path='weights/Inception_with_dense.tf')
+    model = models.Squeezenet()
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
+                  metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
+    train(model, ds, epochs=70, log_name='Squeezenet500.jpeg', save_path='weights/Squeezenet500.tf')
