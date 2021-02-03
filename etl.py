@@ -48,9 +48,10 @@ def random_rotate(image, label):
     """Randomly rotate the image in 35 deg range"""
     def rotate_image(image):
         angle = np.random.uniform() * 35  # random angle from [0, 35]
-        return rotate(image.numpy(), angle)
+        return rotate(image.numpy(), angle, reshape=False)
 
     rotated = tf.py_function(rotate_image, [image], Tout=tf.float32)
+    rotated.set_shape([32, 32, 3])
 
     return rotated, label
 
@@ -68,8 +69,8 @@ def get_train_dataset():
     """Return train dataset after manipulations"""
     train_dataset = load_train_dataset()
     prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # normalize
-    prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
     prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
+    prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
 
     return prep_train
 
@@ -87,6 +88,7 @@ if __name__=='__main__':
     fig, ax = plt.subplots(1, 3)
     for i, (image, label) in enumerate(ds.take(3)):
         ax[i].imshow(image)
+        #print(image.numpy().shape)
     plt.show()
 
 

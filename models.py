@@ -216,11 +216,11 @@ class Inception(tf.keras.Model):
         root_x = self._root_conv(x)
 
         inception1 = self._inception1(root_x)
-        inception2 = self._inception2(inception1) + inception1
+        inception2 = self._inception2(inception1)
         mp1 = self._mp1(inception2)
 
         inception3 = self._inception3(mp1)
-        inception4 = self._inception4(inception3) + inception3
+        inception4 = self._inception4(inception3)
         mp2 = self._mp2(inception4)
 
         output = self._output(self._dropout(self._avg_pool(mp2)))
