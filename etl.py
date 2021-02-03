@@ -11,7 +11,7 @@ def load_train_dataset():
 
 def load_test_dataset():
     "Return CIFAR-100 test dataset"
-    return tfds.load('cifar100', split='train', download=False, as_supervised=True, data_dir='data')
+    return tfds.load('cifar100', split='test', download=False, as_supervised=True, data_dir='data')
 
 
 def get_lables():

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="a4d09f72-e40b-4be6-949c-85c06bc6899a" name="cifar100">
+        <fileTransfer rootFolder="/home/paperspace/Projects/cifar-100" accessType="SFTP" host="74.82.29.189" port="22" sshConfigId="54276c47-594f-413a-9a13-1b42343868ad" sshConfig="paperspace@74.82.29.189:22 agent" authAgent="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
