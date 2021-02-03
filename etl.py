@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import rotate
 
 
 def load_train_dataset():
@@ -43,10 +44,33 @@ def normalize_image(image, label):
     return image / 255, label
 
 
+def random_rotate(image, label):
+    """Randomly rotate the image in 35 deg range"""
+    def rotate_image(image):
+        angle = np.random.uniform() * 35  # random angle from [0, 35]
+        return rotate(image.numpy(), angle)
+
+    rotated = tf.py_function(rotate_image, [image], Tout=tf.float32)
+
+    return rotated, label
+
+
+def random_flip(image, label):
+    """Randomly flip the image left to right"""
+    flip = np.random.uniform()  # flip probability
+    if flip > 0.5:
+        return tf.image.flip_left_right(image), label
+    else:
+        return image, label
+
+
 def get_train_dataset():
     """Return train dataset after manipulations"""
     train_dataset = load_train_dataset()
-    prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # normalize
+    prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
+    prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
+
     return prep_train
 
 
@@ -58,13 +82,12 @@ def get_test_dataset():
 
 
 if __name__=='__main__':
-    ds = load_train_dataset()
-    for image, label in ds.take(1):
-        print(label.numpy())
-        print(image.numpy())
-
-
     ds = get_train_dataset()
-    for image, label in ds.take(1):
-        print(label.numpy())
-        print(image.numpy())
+    plt.figure()
+    fig, ax = plt.subplots(1, 3)
+    for i, (image, label) in enumerate(ds.take(3)):
+        ax[i].imshow(image)
+    plt.show()
+
+
+
