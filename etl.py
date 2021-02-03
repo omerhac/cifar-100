@@ -65,12 +65,31 @@ def random_flip(image, label):
         return image, label
 
 
+def random_mask(image, label):
+    """Put a random black mask of size up to third image size on the image"""
+    def mask(x):
+        mask_size = int(np.floor(np.random.uniform(high=0.33) * 32))
+        mask_hight = int(np.floor(np.random.uniform() * (32 - mask_size)))
+        mask_width = int(np.floor(np.random.uniform() * (32 - mask_size)))
+
+        # mask
+        x = x.numpy()
+        x[mask_hight:mask_hight + mask_size, mask_width:mask_width + mask_size, :] = 0
+        return x
+
+    masked = tf.py_function(mask, [image], Tout=tf.float32)
+    masked.set_shape([32, 32, 3])
+
+    return masked, label
+
+
 def get_train_dataset():
     """Return train dataset after manipulations"""
     train_dataset = load_train_dataset()
     prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # normalize
     prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
     prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
+    prep_train = prep_train.map(random_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # mask
 
     return prep_train
 
