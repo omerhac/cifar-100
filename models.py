@@ -142,6 +142,50 @@ class InceptionModule(tf.keras.layers.Layer):
         return concatenate([conv1, conv3, conv5, maxpool_proj])
 
 
+class InceptionBNModule(tf.keras.layers.Layer):
+    """Inception style module with batch normalization"""
+    def __init__(self, filters1, filters3_red, filters3, filters5_red, filters5, filters_proj, bn_moment=0.9, name='inception'):
+        super(InceptionBNModule, self).__init__(name=name)
+        self._num_filters1 = filters1
+        self._num_filters3_red = filters3_red
+        self._num_filters5_red = filters5_red
+        self.num_filters5 = filters5
+        self._num_filters_proj = filters_proj
+
+        self._conv1 = Conv2D(filters1, (1, 1), activation='relu', padding='same', name='1x1_conv')
+        self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same',name='3x3_reduce_conv')
+        self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same',name='5x5_reduce_conv')
+        self._conv3 = Conv2D(filters3, (3, 3), activation='relu', padding='same', name='3x3_conv')
+        self._conv5 = Conv2D(filters5, (1, 1), activation='relu', padding='same', name='5x5_conv')
+        self._maxpool = MaxPooling2D((3, 3), strides=(1, 1), padding='same', name='3x3_maxpool')
+        self._project = Conv2D(filters_proj, (1, 1), activation='relu', padding='same', name='projection')
+
+        self._bn_conv1 = BatchNormalization(momentum=bn_moment, name='conv1_batch_norm')
+        self._bn_conv3_red = BatchNormalization(momentum=bn_moment, name='conv3_red_batch_norm')
+        self._bn_conv5_red = BatchNormalization(momentum=bn_moment, name='conv5_red_batch_norm')
+        self._bn_conv3 = BatchNormalization(momentum=bn_moment, name='conv3_batch_norm')
+        self._bn_conv5 = BatchNormalization(momentum=bn_moment, name='conv5_batch_norm')
+        self._bn_mp = BatchNormalization(momentum=bn_moment, name='maxpool')
+        self._bn_proj = BatchNormalization(momentum=bn_moment, name='project_batch_norm')
+
+    def call(self, x):
+        """Forward pass on input x"""
+        # perform 1x1 convolutions per all branches for dimensionality reduction
+        conv1 = self._bn_conv1(self._conv1(x))
+        conv3_red = self._bn_conv3_red(self._conv3_red(x))
+        conv5_red = self._bn_conv5_red(self._conv5_red(x))
+
+        # perform branches "expensive" convolutions on reduced maps
+        conv3 = self._bn_conv3(self._conv3(conv3_red))
+        conv5 = self._bn_conv5(self._conv5(conv5_red))
+
+        # maxpooling branch
+        maxpool = self._bn_mp(self._maxpool(x))
+        maxpool_proj = self._bn_proj(self._project(maxpool))
+
+        return concatenate([conv1, conv3, conv5, maxpool_proj])
+
+
 class Inception(tf.keras.Model):
     """Inception style net as in https://arxiv.org/pdf/1409.4842v1.pdf"""
     def __init__(self):
@@ -159,7 +203,7 @@ class Inception(tf.keras.Model):
 
         # block 2
         self._inception3 = InceptionModule(192, 96, 208, 16, 48, 64, name='inception3')
-        self._inception4 = InceptionModule(160, 112, 224, 24, 64, 64, name='inception4')
+        self._inception4 = InceptionModule(60, 112, 224, 24, 64, 64, name='inception4')
         self._mp2 = MaxPooling2D((3, 3), strides=(2, 2), name='maxpool2')
 
         # top
@@ -172,6 +216,50 @@ class Inception(tf.keras.Model):
         root_x = self._root_conv(x)
 
         inception1 = self._inception1(root_x)
+        inception2 = self._inception2(inception1) + inception1
+        mp1 = self._mp1(inception2)
+
+        inception3 = self._inception3(mp1)
+        inception4 = self._inception4(inception3) + inception3
+        mp2 = self._mp2(inception4)
+
+        output = self._output(self._dropout(self._avg_pool(mp2)))
+
+        return output
+
+
+class InceptionBN(tf.keras.Model):
+    """Inception style net with batch normalization"""
+
+    def __init__(self):
+        super(InceptionBN, self).__init__()
+
+        # root
+        self._root_conv = Conv2D(64, (5, 5), input_shape=[32, 32, 3], padding='valid', activation='relu',
+                                 name='root_conv')
+        self._bn_root = BatchNormalization(momentum=0.9, name='bn_root')
+
+        # inception modules
+        # block 1
+        self._inception1 = InceptionBNModule(64, 96, 128, 16, 32, 32, name='inception1')
+        self._inception2 = InceptionBNModule(128, 128, 192, 32, 96, 34, name='inception2')
+        self._mp1 = MaxPooling2D((3, 3), strides=(2, 2), name='maxpool1')
+
+        # block 2
+        self._inception3 = InceptionBNModule(192, 96, 208, 16, 48, 64, name='inception3')
+        self._inception4 = InceptionBNModule(160, 112, 224, 24, 64, 64, name='inception4')
+        self._mp2 = MaxPooling2D((3, 3), strides=(2, 2), name='maxpool2')
+
+        # top
+        self._avg_pool = GlobalAveragePooling2D(name='top_avg_pool')
+        self._dropout = Dropout(0.4)
+        self._output = Dense(100, activation='softmax', name='output_layer')
+
+    def call(self, x):
+        "Forward pass on input x"
+        root_x = self._bn_root(self._root_conv(x))
+
+        inception1 = self._inception1(root_x)
         inception2 = self._inception2(inception1)
         mp1 = self._mp1(inception2)
 
@@ -182,7 +270,6 @@ class Inception(tf.keras.Model):
         output = self._output(self._dropout(self._avg_pool(mp2)))
 
         return output
-
 
 
 if __name__ == '__main__':

@@ -77,11 +77,7 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
 if __name__ == '__main__':
     ds = etl.get_train_dataset()
-    model = models.Inception()
+    model = models.InceptionBN()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
                   metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=70, log_name='Inception_with_dense.jpeg', save_path='weights/Inception_with_dense.tf')
-    model = models.Squeezenet()
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
-                  metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=70, log_name='Squeezenet500.jpeg', save_path='weights/Squeezenet500.tf')
+    train(model, ds, epochs=30, log_name='Inception_BN.jpeg', save_path='weights/InceptionBN.tf')
