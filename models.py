@@ -272,11 +272,31 @@ class InceptionBN(tf.keras.Model):
         return output
 
 
+class LossFunction(tf.keras.losses.Loss):
+    """Loss function for models that predicts CIFAR-100 as well as pic mask percent
+    Loss = alpha * sparse_categorical_crossentropy + beta * MSE(over mask prediction)
+    """
+
+    def __init__(self, alpha=1, beta=4):
+        super(LossFunction, self).__init__()
+        self._alpha = alpha
+        self._beta = beta
+
+    def call(self, y_true, y_pred):
+        gt_class, gt_mask = y_true
+        predicted_mask = y_pred[-1]
+        predicted_classes = y_pred[:-1]
+
+        # compute losses
+        sparse_ce = tf.keras.losses.sparse_categorical_crossentropy(gt_class, predicted_classes)
+        mask_mse = tf.keras.losses.mse(gt_mask, [predicted_mask])
+
+        return self._alpha * sparse_ce + self._beta * mask_mse
+
+
 if __name__ == '__main__':
-    model = Squeezenet()
-    x = tf.random.uniform([1, 32, 32, 3])
-    print(model(x).shape)
-    model.build((None, 32, 32, 3))
-    #print(model.summary())
-    l = Inception()
-    print(l(x).shape)
+    a = tf.constant([0.99, 0.001, 2], dtype=tf.float32)
+    b = tf.constant([1, 1], dtype=tf.float32)
+
+    l = LossFunction(beta=4)
+    print(l(b, a))
