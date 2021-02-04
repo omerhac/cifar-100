@@ -83,6 +83,13 @@ def random_mask(image, label):
     return masked, label
 
 
+def compute_black_percent(image, label):
+    """Compute the percentage of the image that is black"""
+    black_pix = tf.cast(image == 0, tf.float32)
+    black_sum = tf.reduce_sum(black_pix)
+    return image, label, black_sum / (32 * 32 * 3)
+
+
 def get_train_dataset():
     """Return train dataset after manipulations"""
     train_dataset = load_train_dataset()
@@ -90,7 +97,7 @@ def get_train_dataset():
     prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
     prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
     prep_train = prep_train.map(random_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # mask
-
+    #prep_train = prep_train.map(compute_black_percent, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # masked percent
     return prep_train
 
 
@@ -105,8 +112,9 @@ if __name__=='__main__':
     ds = get_train_dataset()
     plt.figure()
     fig, ax = plt.subplots(1, 3)
-    for i, (image, label) in enumerate(ds.take(3)):
+    for i, (image, label, bp) in enumerate(ds.take(3)):
         ax[i].imshow(image)
+        ax[i].set_title(bp.numpy())
         #print(image.numpy().shape)
     plt.show()
 

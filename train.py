@@ -80,4 +80,4 @@ if __name__ == '__main__':
     model = models.InceptionBN()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
                   metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=30, log_name='InceptionBN_augment.jpeg', save_path='weights/InceptionBN_eugment.tf')
+    train(model, ds, epochs=70, log_name='InceptionBN_augment.jpeg', save_path='weights/InceptionBN_eugment.tf')
