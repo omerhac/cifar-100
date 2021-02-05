@@ -8,7 +8,7 @@ from tensorflow.keras.metrics import SparseCategoricalAccuracy, SparseTopKCatego
 
 
 def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save_dir='weights', save_path=None, seed=42,
-          log_name=None):
+          log_name=None, predict_mask=False):
     """Train the provided model on the provided train dataset generator.
     Args:
         model: tf keras compiled Model to train.
@@ -30,79 +30,85 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     test_generator = etl.get_test_dataset().batch(batch_size)
 
     # train and log
-    loss_function = models.LossFunction(beta=20)
-    optimizer = tf.optimizers.Adam()
+    if predict_mask:
+        # default training
+        hist = model.fit(prep_train, epochs=epochs, steps_per_epoch=50000//batch_size, validation_data=test_generator)
+        hist = hist.history
+    else:
+        # custom training
+        loss_function = models.LossFunction(beta=20)
+        optimizer = tf.optimizers.Adam()
 
-    # initialize aggregators
-    mean_loss = tf.keras.metrics.Mean(name='mean_loss')
-    mean_categorical_accuracy = tf.keras.metrics.Mean(name='mean_categorical_accuracy')
-    mean_top_k = tf.metrics.Mean(name='mean_top_k_accuracy')
-    mean_val_cat_acc = tf.metrics.Mean(name='mean_val_categorical_accuracy')
-    mean_val_top_k = tf.metrics.Mean(name='mean_val_top_k_accuracy')
-    losses, cat_accs, top_ks, val_accs, val_topks = [], [], [], [], []
+        # initialize aggregators
+        mean_loss = tf.keras.metrics.Mean(name='mean_loss')
+        mean_categorical_accuracy = tf.keras.metrics.Mean(name='mean_categorical_accuracy')
+        mean_top_k = tf.metrics.Mean(name='mean_top_k_accuracy')
+        mean_val_cat_acc = tf.metrics.Mean(name='mean_val_categorical_accuracy')
+        mean_val_top_k = tf.metrics.Mean(name='mean_val_top_k_accuracy')
+        losses, cat_accs, top_ks, val_accs, val_topks = [], [], [], [], []
 
-    @tf.function
-    def train_step(batch_images, batch_labels, batch_percent):
-        with tf.GradientTape() as tape:
-            batch_preds = model(batch_images, training=True)
-            loss = loss_function([batch_labels, batch_percent], batch_preds)  # compute loss
+        @tf.function
+        def train_step(batch_images, batch_labels, batch_percent):
+            with tf.GradientTape() as tape:
+                batch_preds = model(batch_images, training=True)
+                loss = loss_function([batch_labels, batch_percent], batch_preds)  # compute loss
 
-            # apply gradients
-            grads_and_vars = tape.gradient(loss, model.trainable_variables)
-            optimizer.apply_gradients(zip(grads_and_vars, model.trainable_variables))
+                # apply gradients
+                grads_and_vars = tape.gradient(loss, model.trainable_variables)
+                optimizer.apply_gradients(zip(grads_and_vars, model.trainable_variables))
 
-        # calculate metrics
-        cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask preds
-        topk_acc = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])
-        return loss, cat_acc, topk_acc
+            # calculate metrics
+            cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask preds
+            topk_acc = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])
+            return loss, cat_acc, topk_acc
 
-    for epoch in range(epochs):
-        print(f'Epoch number {epoch}')
+        for epoch in range(epochs):
+            print(f'Epoch number {epoch}')
 
-        # train
-        for batch_num, (batch_images, batch_labels, batch_percent) in enumerate(prep_train):
-            # calculate and apply gradients
-            loss, cat_acc, top_k_acc = train_step(batch_images, batch_labels, batch_percent)
+            # train
+            for batch_num, (batch_images, batch_labels, batch_percent) in enumerate(prep_train):
+                # calculate and apply gradients
+                loss, cat_acc, top_k_acc = train_step(batch_images, batch_labels, batch_percent)
 
-            # aggregate
-            mean_loss(loss)
-            mean_categorical_accuracy(cat_acc)
-            mean_top_k(top_k_acc)
+                # aggregate
+                mean_loss(loss)
+                mean_categorical_accuracy(cat_acc)
+                mean_top_k(top_k_acc)
 
-            # print loss and accuracy
-            if batch_num % 50 == 0:
-                print(f'Batch {batch_num}/{50000 // batch_size - 1}, Mean loss is: {mean_loss.result():.4f}, '
-                      f'Mean Categorical Accuracy is: {mean_categorical_accuracy.result():.4f},'
-                      f'Mean Top K Accuracy is: {mean_top_k.result():.4f}')
+                # print loss and accuracy
+                if batch_num % 50 == 0:
+                    print(f'Batch {batch_num}/{50000 // batch_size - 1}, Mean loss is: {mean_loss.result():.4f}, '
+                          f'Mean Categorical Accuracy is: {mean_categorical_accuracy.result():.4f},'
+                          f'Mean Top K Accuracy is: {mean_top_k.result():.4f}')
 
-            # finished dataset break rule
-            if batch_num == 50000 // batch_size - 1:
-                break
+                # finished dataset break rule
+                if batch_num == 50000 // batch_size - 1:
+                    break
 
-        # evaluate
-        for batch_num, (batch_images, batch_labels) in enumerate(test_generator):
-            batch_preds = model(batch_images, training=False)
-            # aggregate metric
-            val_cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask pred
-            val_top_k = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])
+            # evaluate
+            for batch_num, (batch_images, batch_labels) in enumerate(test_generator):
+                batch_preds = model(batch_images, training=False)
+                # aggregate metric
+                val_cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask pred
+                val_top_k = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])
 
-            mean_val_cat_acc(val_cat_acc)
-            mean_val_top_k(val_top_k)
+                mean_val_cat_acc(val_cat_acc)
+                mean_val_top_k(val_top_k)
 
-        print(f'Validation Categorical Accuracy score is: {mean_val_cat_acc.result():.4f},'
-              f'Validation Top K Accuracy is: {mean_val_top_k.result():.4f}')
+            print(f'Validation Categorical Accuracy score is: {mean_val_cat_acc.result():.4f},'
+                  f'Validation Top K Accuracy is: {mean_val_top_k.result():.4f}')
 
-        # aggregate and reset
-        cat_accs.append(mean_categorical_accuracy.result())
-        losses.append(mean_loss.result())
-        top_ks.append(mean_top_k.result())
-        val_accs.append(mean_val_top_k.result())
-        val_topks.append(mean_val_top_k.result())
-        mean_categorical_accuracy.reset_states()
-        mean_loss.reset_states()
-        mean_top_k.reset_states()
-        mean_val_top_k.reset_states()
-        mean_val_cat_acc.reset_states()
+            # aggregate and reset
+            cat_accs.append(mean_categorical_accuracy.result())
+            losses.append(mean_loss.result())
+            top_ks.append(mean_top_k.result())
+            val_accs.append(mean_val_top_k.result())
+            val_topks.append(mean_val_top_k.result())
+            mean_categorical_accuracy.reset_states()
+            mean_loss.reset_states()
+            mean_top_k.reset_states()
+            mean_val_top_k.reset_states()
+            mean_val_cat_acc.reset_states()
 
     # save training logs
     if log_name:
@@ -148,5 +154,5 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
 if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
-    model = models.InceptionBN()
+    model = models.InceptionBN(predict_mask=True)
     train(model, ds, epochs=70, log_name='Inception_BN_mask.jpeg', save_path='weights/Inception_BN_mask.tf')

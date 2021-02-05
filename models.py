@@ -31,7 +31,7 @@ def get_simple_model():
     flat = Flatten(name='flatten')(c7)
     d1 = Dense(1028, activation='relu', name='dense_1')(flat)
 
-    output = Dense(101, activation='softmax', name='output_layer')(d1)  # num-classes
+    output = Dense(100, activation='softmax', name='output_layer')(d1)  # num-classes
 
     # compile
     model = tf.keras.Model(x, output)
@@ -229,7 +229,7 @@ class Inception(tf.keras.Model):
 class InceptionBN(tf.keras.Model):
     """Inception style net with batch normalization"""
 
-    def __init__(self):
+    def __init__(self, predict_mask=False):
         super(InceptionBN, self).__init__()
 
         # root
@@ -251,7 +251,11 @@ class InceptionBN(tf.keras.Model):
         # top
         self._avg_pool = GlobalAveragePooling2D(name='top_avg_pool')
         self._dropout = Dropout(0.4)
-        self._output = Dense(101, activation='softmax', name='output_layer')
+
+        if predict_mask:
+            self._output = Dense(101, activation='softmax', name='output_layer')
+        else:
+            self._output = Dense(100, activation='softmax', name='output_layer')
 
     def call(self, x, training=True):
         "Forward pass on input x"
