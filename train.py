@@ -44,7 +44,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     @tf.function
     def train_step(batch_images, batch_labels, batch_percent):
         with tf.GradientTape() as tape:
-            batch_preds = model(batch_images)
+            batch_preds = model(batch_images, training=True)
             loss = loss_function([batch_labels, batch_percent], batch_preds)  # compute loss
 
             # apply gradients
@@ -81,7 +81,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
 
         # evaluate
         for batch_num, (batch_images, batch_labels) in enumerate(test_generator):
-            batch_preds = model(batch_images)
+            batch_preds = model(batch_images, training=False)
             # aggregate metric
             val_cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask pred
             val_top_k = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])

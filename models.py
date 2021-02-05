@@ -166,20 +166,20 @@ class InceptionBNModule(tf.keras.layers.Layer):
         self._bn_mp = BatchNormalization(momentum=bn_moment, name='maxpool')
         self._bn_proj = BatchNormalization(momentum=bn_moment, name='project_batch_norm')
 
-    def call(self, x):
+    def call(self, x, training=True):
         """Forward pass on input x"""
         # perform 1x1 convolutions per all branches for dimensionality reduction
-        conv1 = self._bn_conv1(self._conv1(x))
-        conv3_red = self._bn_conv3_red(self._conv3_red(x))
-        conv5_red = self._bn_conv5_red(self._conv5_red(x))
+        conv1 = self._bn_conv1(self._conv1(x), training=training)
+        conv3_red = self._bn_conv3_red(self._conv3_red(x), training=training)
+        conv5_red = self._bn_conv5_red(self._conv5_red(x), training=training)
 
         # perform branches "expensive" convolutions on reduced maps
-        conv3 = self._bn_conv3(self._conv3(conv3_red))
-        conv5 = self._bn_conv5(self._conv5(conv5_red))
+        conv3 = self._bn_conv3(self._conv3(conv3_red), training=training)
+        conv5 = self._bn_conv5(self._conv5(conv5_red), training=training)
 
         # maxpooling branch
-        maxpool = self._bn_mp(self._maxpool(x))
-        maxpool_proj = self._bn_proj(self._project(maxpool))
+        maxpool = self._bn_mp(self._maxpool(x), training=training)
+        maxpool_proj = self._bn_proj(self._project(maxpool), training=training)
 
         return concatenate([conv1, conv3, conv5, maxpool_proj])
 
@@ -253,16 +253,16 @@ class InceptionBN(tf.keras.Model):
         self._dropout = Dropout(0.4)
         self._output = Dense(101, activation='softmax', name='output_layer')
 
-    def call(self, x):
+    def call(self, x, training=True):
         "Forward pass on input x"
-        root_x = self._bn_root(self._root_conv(x))
+        root_x = self._bn_root(self._root_conv(x), training=training)
 
-        inception1 = self._inception1(root_x)
-        inception2 = self._inception2(inception1)
+        inception1 = self._inception1(root_x, training=training)
+        inception2 = self._inception2(inception1, training=training)
         mp1 = self._mp1(inception2)
 
-        inception3 = self._inception3(mp1)
-        inception4 = self._inception4(inception3)
+        inception3 = self._inception3(mp1, training=training)
+        inception4 = self._inception4(inception3, training=training)
         mp2 = self._mp2(inception4)
 
         output = self._output(self._dropout(self._avg_pool(mp2)))
