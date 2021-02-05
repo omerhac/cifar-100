@@ -149,6 +149,4 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
     model = models.get_simple_model()
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
-                  metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
-    train(model, ds, epochs=70, log_name='InceptionBN_augment.jpeg', save_path='weights/InceptionBN_eugment.tf')
+    train(model, ds, epochs=30, log_name='benchmark_mask.jpeg', save_path='weights/benchmark_mask.tf')

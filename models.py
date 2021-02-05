@@ -35,8 +35,6 @@ def get_simple_model():
 
     # compile
     model = tf.keras.Model(x, output)
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
-                  metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
 
     return model
 
