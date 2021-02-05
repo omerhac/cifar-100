@@ -251,7 +251,7 @@ class InceptionBN(tf.keras.Model):
         # top
         self._avg_pool = GlobalAveragePooling2D(name='top_avg_pool')
         self._dropout = Dropout(0.4)
-        self._output = Dense(100, activation='softmax', name='output_layer')
+        self._output = Dense(101, activation='softmax', name='output_layer')
 
     def call(self, x):
         "Forward pass on input x"

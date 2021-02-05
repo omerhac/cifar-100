@@ -66,7 +66,7 @@ def random_flip(image, label):
 
 
 def random_mask(image, label):
-    """Put a random black mask of size up to third image size on the image"""
+    """Put a random black mask of size up to ninth image size on the image"""
     def mask(x):
         mask_size = int(np.floor(np.random.uniform(high=0.33) * 32))
         mask_hight = int(np.floor(np.random.uniform() * (32 - mask_size)))

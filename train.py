@@ -52,8 +52,8 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
             optimizer.apply_gradients(zip(grads_and_vars, model.trainable_variables))
 
         # calculate metrics
-        cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds)
-        topk_acc = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds)
+        cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask preds
+        topk_acc = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])
         return loss, cat_acc, topk_acc
 
     for epoch in range(epochs):
@@ -80,11 +80,11 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
                 break
 
         # evaluate
-        for batch_num, (batch_images, batch_labels, batch_percent) in enumerate(test_generator):
+        for batch_num, (batch_images, batch_labels) in enumerate(test_generator):
             batch_preds = model(batch_images)
             # aggregate metric
-            val_cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds)
-            val_top_k = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds)
+            val_cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds[:, :-1])  # without mask pred
+            val_top_k = tf.metrics.sparse_top_k_categorical_accuracy(batch_labels, batch_preds[:, :-1])
 
             mean_val_cat_acc(val_cat_acc)
             mean_val_top_k(val_top_k)
@@ -148,5 +148,5 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
 if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
-    model = models.get_simple_model()
-    train(model, ds, epochs=30, log_name='benchmark_mask.jpeg', save_path='weights/benchmark_mask.tf')
+    model = models.InceptionBN()
+    train(model, ds, epochs=70, log_name='Inception_BN_mask.jpeg', save_path='weights/Inception_BN_mask.tf')
