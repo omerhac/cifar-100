@@ -30,7 +30,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     test_generator = etl.get_test_dataset().batch(batch_size)
 
     # train and log
-    loss_function = tf.losses.SparseCategoricalCrossentropy()
+    loss_function = models.LossFunction(beta=20)
     optimizer = tf.optimizers.Adam()
 
     # initialize aggregators
@@ -42,10 +42,10 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     losses, cat_accs, top_ks, val_accs, val_topks = [], [], [], [], []
 
     @tf.function
-    def train_step(batch_images, batch_labels):
+    def train_step(batch_images, batch_labels, batch_percent):
         with tf.GradientTape() as tape:
             batch_preds = model(batch_images)
-            loss = loss_function(batch_labels, batch_preds)  # compute loss
+            loss = loss_function([batch_labels, batch_percent], batch_preds)  # compute loss
 
             # apply gradients
             grads_and_vars = tape.gradient(loss, model.trainable_variables)
@@ -60,9 +60,9 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
         print(f'Epoch number {epoch}')
 
         # train
-        for batch_num, (batch_images, batch_labels) in enumerate(prep_train):
+        for batch_num, (batch_images, batch_labels, batch_percent) in enumerate(prep_train):
             # calculate and apply gradients
-            loss, cat_acc, top_k_acc = train_step(batch_images, batch_labels)
+            loss, cat_acc, top_k_acc = train_step(batch_images, batch_labels, batch_percent)
 
             # aggregate
             mean_loss(loss)
@@ -80,7 +80,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
                 break
 
         # evaluate
-        for batch_num, (batch_images, batch_labels) in enumerate(test_generator):
+        for batch_num, (batch_images, batch_labels, batch_percent) in enumerate(test_generator):
             batch_preds = model(batch_images)
             # aggregate metric
             val_cat_acc = tf.metrics.sparse_categorical_accuracy(batch_labels, batch_preds)
@@ -147,8 +147,8 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 
 
 if __name__ == '__main__':
-    ds = etl.get_train_dataset()
-    model = models.InceptionBN()
+    ds = etl.get_train_dataset(with_mask_percent=True)
+    model = models.get_simple_model()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
                   metrics=[SparseCategoricalAccuracy(), SparseTopKCategoricalAccuracy(k=5)])
     train(model, ds, epochs=70, log_name='InceptionBN_augment.jpeg', save_path='weights/InceptionBN_eugment.tf')

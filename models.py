@@ -31,7 +31,7 @@ def get_simple_model():
     flat = Flatten(name='flatten')(c7)
     d1 = Dense(1028, activation='relu', name='dense_1')(flat)
 
-    output = Dense(100, activation='softmax', name='output_layer')(d1)  # num-classes
+    output = Dense(101, activation='softmax', name='output_layer')(d1)  # num-classes
 
     # compile
     model = tf.keras.Model(x, output)
@@ -284,8 +284,8 @@ class LossFunction(tf.keras.losses.Loss):
 
     def call(self, y_true, y_pred):
         gt_class, gt_mask = y_true
-        predicted_mask = y_pred[-1]
-        predicted_classes = y_pred[:-1]
+        predicted_mask = y_pred[:, -1]  # last dimension predicts mask
+        predicted_classes = y_pred[:, :-1]  # all other dimensions predicts classes
 
         # compute losses
         sparse_ce = tf.keras.losses.sparse_categorical_crossentropy(gt_class, predicted_classes)
@@ -295,8 +295,9 @@ class LossFunction(tf.keras.losses.Loss):
 
 
 if __name__ == '__main__':
-    a = tf.constant([0.99, 0.001, 2], dtype=tf.float32)
-    b = tf.constant([1, 1], dtype=tf.float32)
+    a = tf.random.uniform([2,3])
+    c = tf.constant([1, 1])
+    m = tf.constant([1, 2])
 
     l = LossFunction(beta=4)
-    print(l(b, a))
+    print(l([c, m], a))

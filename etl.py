@@ -90,14 +90,16 @@ def compute_black_percent(image, label):
     return image, label, black_sum / (32 * 32 * 3)
 
 
-def get_train_dataset():
+def get_train_dataset(with_mask_percent=False):
     """Return train dataset after manipulations"""
     train_dataset = load_train_dataset()
     prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # normalize
     prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
     prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
     prep_train = prep_train.map(random_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # mask
-    #prep_train = prep_train.map(compute_black_percent, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # masked percent
+
+    if with_mask_percent:
+        prep_train = prep_train.map(compute_black_percent, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # masked percent
     return prep_train
 
 
