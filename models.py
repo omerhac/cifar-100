@@ -87,7 +87,7 @@ class Squeezenet(tf.keras.Model):
         root_x = self._root_conv(x)
 
         fire1 = self._fire1(root_x)
-        fire2 = fire1 + self._fire2(fire1) # residual connection
+        fire2 = fire1 + self._fire2(fire1)  # residual connection
         fire3 = self._fire3(fire2)
         mp1 = self._mp1(fire3)
 
@@ -112,8 +112,8 @@ class InceptionModule(tf.keras.layers.Layer):
         self._num_filters_proj = filters_proj
 
         self._conv1 = Conv2D(filters1, (1, 1), activation='relu', padding='same', name='1x1_conv')
-        self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same',name='3x3_reduce_conv')
-        self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same',name='5x5_reduce_conv')
+        self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same', name='3x3_reduce_conv')
+        self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same', name='5x5_reduce_conv')
         self._conv3 = Conv2D(filters3, (3, 3), activation='relu', padding='same', name='3x3_conv')
         self._conv5 = Conv2D(filters5, (1, 1), activation='relu', padding='same', name='5x5_conv')
         self._maxpool = MaxPooling2D((3, 3), strides=(1, 1), padding='same', name='3x3_maxpool')
@@ -148,8 +148,8 @@ class InceptionBNModule(tf.keras.layers.Layer):
         self._num_filters_proj = filters_proj
 
         self._conv1 = Conv2D(filters1, (1, 1), activation='relu', padding='same', name='1x1_conv')
-        self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same',name='3x3_reduce_conv')
-        self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same',name='5x5_reduce_conv')
+        self._conv3_red = Conv2D(filters3_red, (1, 1), activation='relu', padding='same', name='3x3_reduce_conv')
+        self._conv5_red = Conv2D(filters5_red, (1, 1), activation='relu', padding='same', name='5x5_reduce_conv')
         self._conv3 = Conv2D(filters3, (3, 3), activation='relu', padding='same', name='3x3_conv')
         self._conv5 = Conv2D(filters5, (1, 1), activation='relu', padding='same', name='5x5_conv')
         self._maxpool = MaxPooling2D((3, 3), strides=(1, 1), padding='same', name='3x3_maxpool')
