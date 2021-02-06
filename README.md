@@ -23,7 +23,7 @@ models_preformance.ipynb  ->  notebook for keeping track of different models per
 
 
 ## Getting started
-Its recomended to start with model_performance.ipynb
+Its recomended to start with EDA.ipynb and then model_performance.ipynb
 
 ## Performance
 Best model performance is 0.61 categorical accuracy and 0.87 top 5 categorical accuracy
