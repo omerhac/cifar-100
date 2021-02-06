@@ -17,13 +17,13 @@ def load_test_dataset():
 
 def get_lables():
     """Return CIFAR-100 labels tfds object"""
-    _, info = tfds.load('cifar100', with_info=True, download=False)
+    _, info = tfds.load('cifar100', with_info=True, download=False, data_dir='data')
     return info.features['label']
 
 
 def get_coarse_lables():
     """Return CIFAR-100 labels tfds object"""
-    _, info = tfds.load('cifar100', with_info=True, download=False)
+    _, info = tfds.load('cifar100', with_info=True, download=False, data_dir='data')
     return info.features['coarse_label']
 
 
@@ -110,7 +110,7 @@ def get_train_dataset(with_mask_percent=False):
     prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # normalize
     prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
     prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
-    prep_train = prep_train.map(random_shift, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # shift
+    #prep_train = prep_train.map(random_shift, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # shift
     prep_train = prep_train.map(random_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # mask
 
     if with_mask_percent:

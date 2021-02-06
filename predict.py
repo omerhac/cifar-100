@@ -29,24 +29,6 @@ def predict(image, model=None, load_dir='weights/InceptionBN_aug', string_label=
         return int_label.numpy()[0]
 
 
-def build_confusion_metrix(model_path, n_examples):
-    """Build confusion matrix
-    Args:
-        model_path: path to saved model
-        n_examples: number of examples to base on
-    Return:
-        confusion_matrix -> numpy array
-    """
-
-    model = tf.keras.models.load_model(model_path)
-
-    ds = etl.get_test_dataset().batch(10)
-
-    # predict
-    sample_labels, sample_images = next(ds)
-    pred_labels = tf.argmax(model(sample_images), axis=1)
-
-
 if __name__ == '__main__':
     a = models.InceptionBN()
     ds = etl.load_train_dataset()
