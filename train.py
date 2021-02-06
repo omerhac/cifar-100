@@ -30,13 +30,13 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     test_generator = etl.get_test_dataset().batch(batch_size)
 
     # train and log
-    if predict_mask:
+    if not predict_mask:
         # default training
         hist = model.fit(prep_train, epochs=epochs, steps_per_epoch=50000//batch_size, validation_data=test_generator)
         hist = hist.history
     else:
         # custom training
-        loss_function = models.LossFunction(beta=20)
+        loss_function = models.LossFunction(beta=5)
         optimizer = tf.optimizers.Adam()
 
         # initialize aggregators
@@ -110,12 +110,19 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
             mean_val_top_k.reset_states()
             mean_val_cat_acc.reset_states()
 
+        # gather logs
+        hist = {'loss': losses, 'sparse_categorical_accuracy': cat_accs, 'val_sparse_categorical_accuracy': val_accs,
+                'sparse_top_k_categorical_accuracy': top_ks, val_top_k: 'val_sparse_top_k_categorical_accuracy'}
+
     # save training logs
     if log_name:
         if not os.path.exists(log_dir): os.mkdir(log_dir)
 
         # loss log
-        plot_log(hist, epochs, ['loss', 'val_loss'], save_path=log_dir+'/loss_log_'+log_name)
+        if predict_mask:
+            plot_log(hist, epochs, ['loss'], save_path=log_dir + '/loss_log_' + log_name)  # no validation loss plot
+        else:
+            plot_log(hist, epochs, ['loss', 'val_loss'], save_path=log_dir+'/loss_log_'+log_name)
 
         # accuracy log
         plot_log(hist, epochs, ['sparse_categorical_accuracy', 'val_sparse_categorical_accuracy'],
@@ -155,4 +162,4 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
     model = models.InceptionBN(predict_mask=True)
-    train(model, ds, epochs=70, log_name='Inception_BN_mask.jpeg', save_path='weights/Inception_BN_mask.tf')
+    train(model, ds, epochs=80, log_name='Inception_BN_mask.jpeg', save_path='weights/Inception_BN_mask.tf')
