@@ -8,7 +8,7 @@ from tensorflow.keras.metrics import SparseCategoricalAccuracy, SparseTopKCatego
 
 
 def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save_dir='weights', save_path=None, seed=42,
-          log_name=None, predict_mask=False):
+          log_name=None, predict_mask=False, mask_beta=10):
     """Train the provided model on the provided train dataset generator.
     Args:
         model: tf keras compiled Model to train.
@@ -20,6 +20,8 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
         save_path: path for saving model .h5 weights. defaults to None for non saving session
         seed: train shuffling seed
         log_name: train logging name, defaults to None for non logging session
+        predict_mask: flag, whether to train a model with predictive mask
+        mask_beta: predictive mask beta loss term. use only if predict mask is True
     """
 
     # prepare dataset
@@ -36,7 +38,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
         hist = hist.history
     else:
         # custom training
-        loss_function = models.LossFunction(beta=0)
+        loss_function = models.LossFunction(beta=mask_beta)
         optimizer = tf.optimizers.Adam()
 
         # initialize aggregators
@@ -112,7 +114,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
 
         # gather logs
         hist = {'loss': losses, 'sparse_categorical_accuracy': cat_accs, 'val_sparse_categorical_accuracy': val_accs,
-                'sparse_top_k_categorical_accuracy': top_ks, val_top_k: 'val_sparse_top_k_categorical_accuracy'}
+                'sparse_top_k_categorical_accuracy': top_ks, 'val_sparse_top_k_categorical_accuracy': val_topks}
 
     # save training logs
     if log_name:
@@ -162,5 +164,10 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
     model = models.InceptionBN(predict_mask=True)
-    train(model, ds, epochs=80, log_name='InceptionBN_aug.jpeg', save_path='weights/InceptionBN_aug.tf',
-          predict_mask=True)
+    #train(model, ds, epochs=2, log_name='InceptionBN_aug_shift.jpeg', save_path='weights/InceptionBN_aug_shift.tf',
+    #      predict_mask=True, mask_beta=0)
+
+    ds = etl.get_train_dataset(with_mask_percent=True)
+    model = models.InceptionBN(predict_mask=True)
+    train(model, ds, epochs=70, log_name='InceptionBN_aug_shift_mask.jpeg', save_path='weights/InceptionBN_aug_shift_mask.tf',
+          predict_mask=True, mask_beta=10)
