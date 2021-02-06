@@ -1,9 +1,6 @@
 import tensorflow as tf
-import numpy as np
-import etl
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, MaxPooling2D, Input, Flatten, concatenate,\
     GlobalAveragePooling2D, Dropout
-from tensorflow.keras.metrics import SparseCategoricalAccuracy, SparseTopKCategoricalAccuracy
 
 
 def get_simple_model():

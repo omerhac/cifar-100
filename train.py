@@ -1,6 +1,5 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import numpy as np
 import models
 import etl
 import os
@@ -34,6 +33,8 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
     # train and log
     if not predict_mask:
         # default training
+        model.compile(loss='sparse_categorical_crossentropy', optimizer='adam',
+                      metrics=[SparseCategoricalAccuracy, SparseTopKCategoricalAccuracy])
         hist = model.fit(prep_train, epochs=epochs, steps_per_epoch=50000//batch_size, validation_data=test_generator)
         hist = hist.history
     else:
