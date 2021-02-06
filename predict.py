@@ -38,4 +38,4 @@ if __name__ == '__main__':
     for image, label in ds.take(1):
         i = image.numpy()
     print(i)
-    print(predict(i, load_dir='check'))
+    print(predict(i, load_dir='weights/check'))
