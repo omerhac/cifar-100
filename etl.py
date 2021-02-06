@@ -33,6 +33,12 @@ def get_label_name(label):
     return labels.int2str(label)
 
 
+def get_label_int(label):
+    """Return a string label int"""
+    labels = get_lables()
+    return labels.str2int(label)
+
+
 def get_coarse_label_name(label):
     """Return a coarse int label string name"""
     labels = get_coarse_lables()
