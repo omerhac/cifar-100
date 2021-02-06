@@ -2,3 +2,5 @@
 /logs
 /weights
 /data
+/__pycache__
+/.idea

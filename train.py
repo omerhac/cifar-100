@@ -171,4 +171,4 @@ if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
     model = models.InceptionBN(predict_mask=True)
     train(model, ds, epochs=70, log_name='InceptionBN_aug_shift_mask.jpeg', save_path='weights/InceptionBN_aug_shift_mask.tf',
-          predict_mask=True, mask_beta=10)
+          predict_mask=True, mask_beta=5)

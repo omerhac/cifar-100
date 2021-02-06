@@ -91,10 +91,10 @@ def compute_black_percent(image, label):
 
 
 def random_shift(image, label):
-    """Randomly shift the image in 20% range of image height / width"""
+    """Randomly shift the image in 10% range of image height / width"""
     def shift(image):
         shifted = tf.keras.preprocessing.image.random_shift(
-            image.numpy(), 0.2, 0.2, row_axis=0, col_axis=1, channel_axis=2,
+            image.numpy(), 0.1, 0.1, row_axis=0, col_axis=1, channel_axis=2,
             fill_mode='constant', cval=0.0, interpolation_order=1
         )
         return shifted
