@@ -90,12 +90,27 @@ def compute_black_percent(image, label):
     return image, label, black_sum / (32 * 32 * 3)
 
 
+def random_shift(image, label):
+    """Randomly shift the image in 20% range of image height / width"""
+    def shift(image):
+        shifted = tf.keras.preprocessing.image.random_shift(
+            image.numpy(), 0.2, 0.2, row_axis=0, col_axis=1, channel_axis=2,
+            fill_mode='constant', cval=0.0, interpolation_order=1
+        )
+        return shifted
+
+    shifted_image = tf.py_function(shift, [image], Tout=tf.float32)
+
+    return shifted_image, label
+
+
 def get_train_dataset(with_mask_percent=False):
     """Return train dataset after manipulations"""
     train_dataset = load_train_dataset()
     prep_train = train_dataset.map(normalize_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # normalize
     prep_train = prep_train.map(random_rotate, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # rotate
     prep_train = prep_train.map(random_flip, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # flip
+    prep_train = prep_train.map(random_shift, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # shift
     prep_train = prep_train.map(random_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)  # mask
 
     if with_mask_percent:
@@ -111,13 +126,11 @@ def get_test_dataset():
 
 
 if __name__=='__main__':
-    ds = get_train_dataset()
+    ds = load_train_dataset().map(normalize_image).map(random_shift)
     plt.figure()
     fig, ax = plt.subplots(1, 3)
-    for i, (image, label, bp) in enumerate(ds.take(3)):
+    for i, (image, label) in enumerate(ds.take(3)):
         ax[i].imshow(image)
-        ax[i].set_title(bp.numpy())
-        #print(image.numpy().shape)
     plt.show()
 
 

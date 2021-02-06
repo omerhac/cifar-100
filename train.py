@@ -36,7 +36,7 @@ def train(model, train_generator, batch_size=64, epochs=50, log_dir='logs', save
         hist = hist.history
     else:
         # custom training
-        loss_function = models.LossFunction(beta=5)
+        loss_function = models.LossFunction(beta=0)
         optimizer = tf.optimizers.Adam()
 
         # initialize aggregators
@@ -162,4 +162,5 @@ def plot_log(hist_dict, epochs, val_names, save_path='log.jpg'):
 if __name__ == '__main__':
     ds = etl.get_train_dataset(with_mask_percent=True)
     model = models.InceptionBN(predict_mask=True)
-    train(model, ds, epochs=80, log_name='Inception_BN_mask.jpeg', save_path='weights/Inception_BN_mask.tf')
+    train(model, ds, epochs=80, log_name='InceptionBN_aug.jpeg', save_path='weights/InceptionBN_aug.tf',
+          predict_mask=True)
