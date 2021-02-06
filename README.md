@@ -1,7 +1,7 @@
 # cifar-100
 CIFAR100 rep
 
-## installation
+## Installation
     ! pip install tensorflow==2.3.0
     ! pip install -r requirements.txt
   
@@ -20,3 +20,10 @@ train.py  -> training module, the 'train' routine accepts a model and a dataset 
 predict.py  -> inference module, used for deplyment / testing the model
 
 models_preformance.ipynb  ->  notebook for keeping track of different models performance
+
+
+## Getting started
+Its recomended to start with model_performance.ipynb
+
+## Performance
+Best model performance is 0.61 categorical accuracy and 0.87 top 5 categorical accuracy
