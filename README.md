@@ -1,7 +1,12 @@
 # cifar-100
 CIFAR100 rep
 
-
+## installation
+    ! pip install tensorflow==2.3.0
+    ! pip install -r requirements.txt
+  
+Or for docker, use the Dockerfile.gpu docker file
+      
 ## Modules
 EDA.ipynb  ->  exploratory data analysis notebook
 
